@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="nb" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>القرآن الكريم — Al-Husary Murattal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:               #faf9f6;
+      --bg-sidebar:       #f0ede5;
+      --bg-card:          #ffffff;
+      --text:             #1a1a1a;
+      --text-muted:       #6b6b6b;
+      --accent:           #1b5e20;
+      --accent-light:     #e8f5e9;
+      --border:           #e0dbd0;
+      --highlight:        #c8e6c9;
+      --highlight-border: #2e7d32;
+      --header-bg:        #1b5e20;
+      --header-text:      #ffffff;
+      --player-bg:        #133816;
+      --player-text:      #ffffff;
+      --surah-active:     #c8e6c9;
+      --surah-active-txt: #1b5e20;
+      --tab-idle:         rgba(255,255,255,0.18);
+      --tab-idle-txt:     rgba(255,255,255,0.88);
+      --tab-active-bg:    #ffffff;
+      --tab-active-txt:   #1b5e20;
+    }
+
+    [data-theme="dark"] {
+      --bg:               #0d1117;
+      --bg-sidebar:       #161b22;
+      --bg-card:          #1c2128;
+      --text:             #c9d1d9;
+      --text-muted:       #8b949e;
+      --accent:           #4caf50;
+      --accent-light:     #1b2e1d;
+      --border:           #30363d;
+      --highlight:        #1b3020;
+      --highlight-border: #4caf50;
+      --header-bg:        #161b22;
+      --header-text:      #c9d1d9;
+      --player-bg:        #0d1117;
+      --player-text:      #c9d1d9;
+      --surah-active:     #1b3020;
+      --surah-active-txt: #4caf50;
+      --tab-idle:         rgba(255,255,255,0.07);
+      --tab-idle-txt:     rgba(201,209,217,0.85);
+      --tab-active-bg:    #4caf50;
+      --tab-active-txt:   #0d1117;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: background 0.25s, color 0.25s;
+    }
+
+    /* ─── Header ─────────────────────────────────────── */
+    header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      height: 62px;
+      flex-shrink: 0;
+      gap: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.22);
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.25;
+      flex-shrink: 0;
+    }
+    .brand-ar {
+      font-family: 'Amiri', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--header-text);
+    }
+    .brand-sub {
+      font-size: 0.68rem;
+      opacity: 0.72;
+      white-space: nowrap;
+    }
+
+    .juz-tabs {
+      display: flex;
+      gap: 6px;
+      margin: 0 auto;
+    }
+    .tab-btn {
+      background: var(--tab-idle);
+      color: var(--tab-idle-txt);
+      border: none;
+      padding: 7px 22px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s;
+      font-family: 'Inter', sans-serif;
+    }
+    .tab-btn:hover { background: rgba(255,255,255,0.28); }
+    .tab-btn.active {
+      background: var(--tab-active-bg);
+      color: var(--tab-active-txt);
+      font-weight: 600;
+    }
+
+    .theme-btn {
+      background: var(--tab-idle);
+      border: none;
+      cursor: pointer;
+      padding: 7px 10px;
+      border-radius: 20px;
+      font-size: 1rem;
+      line-height: 1;
+      transition: background 0.18s;
+      flex-shrink: 0;
+    }
+    .theme-btn:hover { background: rgba(255,255,255,0.28); }
+
+    /* ─── Layout ──────────────────────────────────────── */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ─── Sidebar ─────────────────────────────────────── */
+    aside {
+      width: 255px;
+      min-width: 255px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      flex-shrink: 0;
+      transition: background 0.25s;
+    }
+
+    .sidebar-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--text-muted);
+      padding: 14px 16px 8px;
+      position: sticky;
+      top: 0;
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+      z-index: 1;
+    }
+
+    .surah-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 9px 14px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.14s;
+    }
+    .surah-btn:hover { background: rgba(0,0,0,0.05); }
+    [data-theme="dark"] .surah-btn:hover { background: rgba(255,255,255,0.05); }
+    .surah-btn.active { background: var(--surah-active); }
+
+    .s-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      transition: background 0.14s, color 0.14s;
+    }
+    .surah-btn.active .s-badge {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .s-names { min-width: 0; }
+    .s-ar {
+      font-family: 'Amiri', serif;
+      font-size: 1rem;
+      color: var(--text);
+      display: block;
+      line-height: 1.4;
+    }
+    .surah-btn.active .s-ar { color: var(--surah-active-txt); }
+    .s-en {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      display: block;
+    }
+
+    /* ─── Main ────────────────────────────────────────── */
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 80px;
+    }
+
+    .surah-header {
+      text-align: center;
+      padding: 28px 32px 22px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .surah-title-ar {
+      font-family: 'Amiri', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      display: block;
+    }
+    .surah-info-en {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .basmala {
+      font-family: 'Amiri', serif;
+      font-size: 1.55rem;
+      color: var(--accent);
+      margin-top: 18px;
+      direction: rtl;
+    }
+
+    .ayahs-wrapper {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 8px 20px;
+    }
+
+    .ayah-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 18px 14px;
+      border-radius: 10px;
+      margin: 3px 0;
+      cursor: pointer;
+      transition: background 0.14s;
+      border: 2px solid transparent;
+    }
+    .ayah-item:hover { background: var(--accent-light); }
+    .ayah-item.active {
+      background: var(--highlight);
+      border-color: var(--highlight-border);
+    }
+
+    .ayah-num {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      margin-top: 6px;
+      transition: border-color 0.14s, color 0.14s;
+    }
+    .ayah-item.active .ayah-num {
+      border-color: var(--highlight-border);
+      color: var(--highlight-border);
+    }
+
+    .ayah-text {
+      font-family: 'Amiri', serif;
+      font-size: 1.75rem;
+      line-height: 2.3;
+      direction: rtl;
+      text-align: right;
+      color: var(--text);
+      flex: 1;
+    }
+
+    /* ─── Status / Loader ─────────────────────────────── */
+    .status-msg {
+      padding: 48px 32px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    .spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: calc(100vh - 62px - 80px);
+      gap: 14px;
+      color: var(--text-muted);
+    }
+    .welcome-ar {
+      font-family: 'Amiri', serif;
+      font-size: 2.2rem;
+      color: var(--accent);
+      opacity: 0.6;
+    }
+    .welcome p { font-size: 0.9rem; }
+
+    /* ─── Footer Player ───────────────────────────────── */
+    footer {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--player-bg);
+      color: var(--player-text);
+      height: 66px;
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+      gap: 14px;
+      box-shadow: 0 -3px 14px rgba(0,0,0,0.28);
+      z-index: 100;
+      transition: transform 0.28s ease, background 0.25s;
+    }
+    footer.hidden { transform: translateY(110%); }
+
+    .p-info { flex: 1; min-width: 0; }
+    .p-label {
+      font-size: 0.65rem;
+      opacity: 0.55;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+    .p-track {
+      font-family: 'Amiri', serif;
+      font-size: 1.05rem;
+      direction: rtl;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .p-meta { font-size: 0.72rem; opacity: 0.65; }
+
+    .p-controls { display: flex; align-items: center; gap: 8px; }
+
+    .ctrl {
+      background: rgba(255,255,255,0.14);
+      border: none;
+      border-radius: 8px;
+      color: var(--player-text);
+      cursor: pointer;
+      padding: 8px 14px;
+      font-size: 0.83rem;
+      font-weight: 500;
+      transition: background 0.14s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      font-family: 'Inter', sans-serif;
+    }
+    .ctrl:hover { background: rgba(255,255,255,0.26); }
+    .ctrl.loop-on {
+      background: rgba(255,255,255,0.32);
+      outline: 1px solid rgba(255,255,255,0.5);
+    }
+    .ctrl.round {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      padding: 0;
+      justify-content: center;
+      font-size: 1.05rem;
+    }
+
+    .loop-chip {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 14px;
+      padding: 4px 10px;
+      font-size: 0.72rem;
+      opacity: 0.85;
+    }
+
+    /* ─── Scrollbar ───────────────────────────────────── */
+    aside::-webkit-scrollbar,
+    main::-webkit-scrollbar { width: 4px; }
+    aside::-webkit-scrollbar-track,
+    main::-webkit-scrollbar-track { background: transparent; }
+    aside::-webkit-scrollbar-thumb,
+    main::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    /* ─── Mobile ──────────────────────────────────────── */
+    @media (max-width: 620px) {
+      aside { width: 190px; min-width: 190px; }
+      .brand-sub { display: none; }
+      .ayah-text { font-size: 1.45rem; }
+      .surah-header { padding: 18px 14px; }
+      .basmala { font-size: 1.3rem; }
+      .juz-tabs { gap: 4px; }
+      .tab-btn { padding: 6px 16px; font-size: 0.8rem; }
+      .loop-chip { display: none; }
+    }
+  </style>
+</head>
+<body data-theme="light">
+
+  <header>
+    <div class="brand">
+      <span class="brand-ar">القرآن الكريم</span>
+      <span class="brand-sub">Al-Husary — Murattal</span>
+    </div>
+
+    <div class="juz-tabs">
+      <button class="tab-btn" id="tab-29" onclick="switchJuz(29)">Juz 29</button>
+      <button class="tab-btn active" id="tab-30" onclick="switchJuz(30)">Juz 30</button>
+    </div>
+
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Bytt lys/mørk modus">🌙</button>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <div class="sidebar-label" id="sidebar-label">Juz 30 — Suraher</div>
+      <div id="surah-list"></div>
+    </aside>
+
+    <main id="main">
+      <div class="welcome">
+        <span class="welcome-ar">بِسْمِ ٱللَّهِ</span>
+        <p>Velg en surah fra listen</p>
+      </div>
+    </main>
+  </div>
+
+  <footer id="player-footer" class="hidden">
+    <div class="p-info">
+      <div class="p-label">Spiller nå</div>
+      <div class="p-track" id="p-track">—</div>
+      <div class="p-meta" id="p-meta"></div>
+    </div>
+    <div class="p-controls">
+      <button class="ctrl round" id="btn-pp" onclick="togglePlayPause()" title="Spill/pause">⏸</button>
+      <button class="ctrl" id="btn-loop" onclick="toggleLoop()" title="Slå loop av/på">↺ Loop</button>
+      <button class="ctrl" onclick="stopPlayback()" title="Stopp avspilling">⏹ Stopp</button>
+    </div>
+  </footer>
+
+  <audio id="player"></audio>
+
+  <script>
+    const state = {
+      juz: 30,
+      surahNum: null,
+      ayahNum: null,
+      looping: false,
+      playingBasmala: false,
+      cache: {}        // { juzNum: { surahNum: { number, name, englishName, ... ayahs: [] } } }
+    };
+
+    const player = document.getElementById('player');
+
+    function pad(n, len) { return String(n).padStart(len, '0'); }
+
+    function audioUrl(surah, ayah) {
+      return `https://everyayah.com/data/Husary_64kbps/${pad(surah, 3)}${pad(ayah, 3)}.mp3`;
+    }
+
+    function stripBasmala(text) {
+      const D = '[\\u0610-\\u061A\\u064B-\\u065F\\u0640\\u0670\\u06D6-\\u06DC\\u06DF-\\u06E4\\u06E7-\\u06E8\\u06EA-\\u06ED]*';
+      const ALEF = '[\\u0627\\u0671\\u0622\\u0623\\u0625]';
+      const LAM  = '\\u0644';
+      const SPC  = '[\\s\\u00A0]*';
+      const re = new RegExp(
+        '^' +
+        `\\u0628${D}\\u0633${D}\\u0645${D}${SPC}` +
+        `${ALEF}${D}${LAM}${D}${LAM}${D}\\u0647${D}${SPC}` +
+        `${ALEF}${D}${LAM}${D}\\u0631${D}\\u062D${D}\\u0645${D}\\u0646${D}${SPC}` +
+        `${ALEF}${D}${LAM}${D}\\u0631${D}\\u062D${D}[\\u064A\\u0649]${D}\\u0645${D}`
+      );
+      return text.replace(re, '').trimStart();
+    }
+
+    // ── API ──────────────────────────────────────────────
+    async function loadJuz(juzNum) {
+      if (state.cache[juzNum]) {
+        renderSidebar(juzNum);
+        return;
+      }
+
+      document.getElementById('surah-list').innerHTML = `
+        <div class="status-msg">
+          <div class="spinner"></div>
+          Laster Juz ${juzNum}…
+        </div>`;
+
+      try {
+        const res = await fetch(`https://api.alquran.cloud/v1/juz/${juzNum}/quran-uthmani`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+
+        const map = {};
+        for (let ayah of json.data.ayahs) {
+          const sn = ayah.surah.number;
+          if (!map[sn]) {
+            map[sn] = {
+              number: sn,
+              name: ayah.surah.name,
+              englishName: ayah.surah.englishName,
+              englishNameTranslation: ayah.surah.englishNameTranslation,
+              ayahs: []
+            };
+          }
+          if (ayah.numberInSurah === 1) {
+            ayah = { ...ayah, text: stripBasmala(ayah.text) };
+          }
+          map[sn].ayahs.push(ayah);
+        }
+
+        state.cache[juzNum] = map;
+        renderSidebar(juzNum);
+      } catch {
+        document.getElementById('surah-list').innerHTML =
+          `<div class="status-msg">Kunne ikke laste data.<br>Sjekk internettforbindelsen og last siden på nytt.</div>`;
+      }
+    }
+
+    // ── Sidebar ──────────────────────────────────────────
+    function renderSidebar(juzNum) {
+      document.getElementById('sidebar-label').textContent = `Juz ${juzNum} — Suraher`;
+      const map = state.cache[juzNum];
+      const list = Object.values(map).sort((a, b) => a.number - b.number);
+
+      document.getElementById('surah-list').innerHTML = list.map(s => `
+        <button class="surah-btn ${state.surahNum === s.number ? 'active' : ''}"
+                data-surah="${s.number}"
+                onclick="selectSurah(${s.number})">
+          <span class="s-badge">${s.number}</span>
+          <span class="s-names">
+            <span class="s-ar">${s.name}</span>
+            <span class="s-en">${s.englishName}</span>
+          </span>
+        </button>`).join('');
+
+      if (!state.surahNum || !map[state.surahNum]) {
+        selectSurah(list[0].number);
+      }
+    }
+
+    // ── Surah ────────────────────────────────────────────
+    function selectSurah(surahNum) {
+      state.surahNum = surahNum;
+      document.querySelectorAll('.surah-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.surah) === surahNum);
+      });
+      renderSurah(surahNum);
+    }
+
+    function renderSurah(surahNum) {
+      const surah = state.cache[state.juz]?.[surahNum];
+      if (!surah) return;
+
+      const ayahsHtml = surah.ayahs.map(a => `
+        <div class="ayah-item ${state.ayahNum === a.numberInSurah && state.surahNum === surahNum ? 'active' : ''}"
+             id="ayah-${a.numberInSurah}"
+             onclick="clickAyah(${surahNum}, ${a.numberInSurah})">
+          <span class="ayah-num">${a.numberInSurah}</span>
+          <p class="ayah-text">${a.text}</p>
+        </div>`).join('');
+
+      document.getElementById('main').innerHTML = `
+        <div class="surah-header">
+          <span class="surah-title-ar">${surah.name}</span>
+          <p class="surah-info-en">${surah.englishName} · ${surah.englishNameTranslation} · ${surah.ayahs.length} ayater</p>
+          <p class="basmala">بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</p>
+        </div>
+        <div class="ayahs-wrapper">${ayahsHtml}</div>`;
+    }
+
+    // ── Playback ─────────────────────────────────────────
+    function clickAyah(surahNum, ayahNum) {
+      state.surahNum = surahNum;
+      state.ayahNum = ayahNum;
+      if (ayahNum === 1) {
+        startSurah(surahNum);
+      } else {
+        playAyah(surahNum, ayahNum);
+      }
+    }
+
+    function playAyah(surahNum, ayahNum) {
+      state.playingBasmala = false;
+      player.src = audioUrl(surahNum, ayahNum);
+      player.play().catch(() => {});
+
+      // Highlight active ayah
+      document.querySelectorAll('.ayah-item').forEach(el => el.classList.remove('active'));
+      const el = document.getElementById(`ayah-${ayahNum}`);
+      if (el) {
+        el.classList.add('active');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      // Update player footer
+      const surah = state.cache[state.juz]?.[surahNum];
+      if (surah) {
+        document.getElementById('p-track').textContent = surah.name;
+        document.getElementById('p-meta').textContent = `${surah.englishName} — Ayat ${ayahNum}`;
+      }
+      document.getElementById('btn-pp').textContent = '⏸';
+      document.getElementById('player-footer').classList.remove('hidden');
+    }
+
+    function togglePlayPause() {
+      if (player.paused) {
+        player.play().catch(() => {});
+        document.getElementById('btn-pp').textContent = '⏸';
+      } else {
+        player.pause();
+        document.getElementById('btn-pp').textContent = '▶';
+      }
+    }
+
+    function toggleLoop() {
+      state.looping = !state.looping;
+      const btn = document.getElementById('btn-loop');
+      btn.classList.toggle('loop-on', state.looping);
+      btn.textContent = state.looping ? '↺ På' : '↺ Loop';
+    }
+
+    function startSurah(surahNum) {
+      state.playingBasmala = true;
+      state.surahNum = surahNum;
+      state.ayahNum = 1;
+      document.querySelectorAll('.ayah-item').forEach(el => el.classList.remove('active'));
+      player.src = 'https://everyayah.com/data/Husary_64kbps/001001.mp3';
+      player.play().catch(() => {});
+      const surah = state.cache[state.juz]?.[surahNum];
+      if (surah) {
+        document.getElementById('p-track').textContent = surah.name;
+        document.getElementById('p-meta').textContent =
+          `${surah.englishName} — بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ`;
+      }
+      document.getElementById('btn-pp').textContent = '⏸';
+      document.getElementById('player-footer').classList.remove('hidden');
+    }
+
+    function stopPlayback() {
+      state.looping = false;
+      state.playingBasmala = false;
+      state.ayahNum = null;
+      player.pause();
+      player.src = '';
+      document.getElementById('player-footer').classList.add('hidden');
+      document.querySelectorAll('.ayah-item').forEach(el => el.classList.remove('active'));
+      const btnLoop = document.getElementById('btn-loop');
+      if (btnLoop) { btnLoop.classList.remove('loop-on'); btnLoop.textContent = '↺ Loop'; }
+    }
+
+    // ── Juz switch ───────────────────────────────────────
+    function switchJuz(juzNum) {
+      if (state.juz === juzNum) return;
+      stopPlayback();
+      state.juz = juzNum;
+      state.surahNum = null;
+
+      document.getElementById('tab-29').classList.toggle('active', juzNum === 29);
+      document.getElementById('tab-30').classList.toggle('active', juzNum === 30);
+
+      document.getElementById('main').innerHTML = `
+        <div class="welcome">
+          <span class="welcome-ar">بِسْمِ ٱللَّهِ</span>
+          <p>Laster Juz ${juzNum}…</p>
+        </div>`;
+
+      loadJuz(juzNum);
+    }
+
+    // ── Theme ────────────────────────────────────────────
+    function toggleTheme() {
+      const dark = document.body.getAttribute('data-theme') === 'dark';
+      document.body.setAttribute('data-theme', dark ? 'light' : 'dark');
+      document.getElementById('theme-btn').textContent = dark ? '🌙' : '☀️';
+    }
+
+    // ── Ended: basmala → ayah1, loop, or auto-advance ────
+    player.addEventListener('ended', () => {
+      if (state.playingBasmala) {
+        state.playingBasmala = false;
+        playAyah(state.surahNum, 1);
+        return;
+      }
+      if (!state.surahNum || !state.ayahNum) {
+        document.getElementById('btn-pp').textContent = '▶';
+        return;
+      }
+      if (state.looping) {
+        playAyah(state.surahNum, state.ayahNum);
+        return;
+      }
+      const surah = state.cache[state.juz]?.[state.surahNum];
+      if (surah) {
+        const idx = surah.ayahs.findIndex(a => a.numberInSurah === state.ayahNum);
+        if (idx !== -1 && idx + 1 < surah.ayahs.length) {
+          const next = surah.ayahs[idx + 1].numberInSurah;
+          state.ayahNum = next;
+          playAyah(state.surahNum, next);
+        } else {
+          const surahNums = Object.keys(state.cache[state.juz])
+            .map(Number).sort((a, b) => a - b);
+          const si = surahNums.indexOf(state.surahNum);
+          if (si !== -1 && si + 1 < surahNums.length) {
+            const nextSurah = surahNums[si + 1];
+            selectSurah(nextSurah);
+            startSurah(nextSurah);
+          } else {
+            document.getElementById('btn-pp').textContent = '▶';
+          }
+        }
+      }
+    });
+
+    player.addEventListener('error', () => {
+      document.getElementById('p-meta').textContent = 'Kunne ikke laste lydfil — prøv igjen';
+      document.getElementById('btn-pp').textContent = '▶';
+    });
+
+    // ── Init ─────────────────────────────────────────────
+    loadJuz(30);
+  </script>
+</body>
+</html>
