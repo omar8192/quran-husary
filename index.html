@@ -104,30 +104,6 @@
       white-space: nowrap;
     }
 
-    .juz-tabs {
-      display: flex;
-      gap: 6px;
-      margin: 0 auto;
-    }
-    .tab-btn {
-      background: var(--tab-idle);
-      color: var(--tab-idle-txt);
-      border: none;
-      padding: 7px 22px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.18s, color 0.18s;
-      font-family: 'Inter', sans-serif;
-    }
-    .tab-btn:hover { background: rgba(255,255,255,0.28); }
-    .tab-btn.active {
-      background: var(--tab-active-bg);
-      color: var(--tab-active-txt);
-      font-weight: 600;
-    }
-
     .theme-btn {
       background: var(--tab-idle);
       border: none;
@@ -437,8 +413,6 @@
       .ayah-text { font-size: 1.45rem; }
       .surah-header { padding: 18px 14px; }
       .basmala { font-size: 1.3rem; }
-      .juz-tabs { gap: 4px; }
-      .tab-btn { padding: 6px 16px; font-size: 0.8rem; }
       .loop-chip { display: none; }
     }
   </style>
@@ -451,17 +425,12 @@
       <span class="brand-sub">Al-Husary — Murattal</span>
     </div>
 
-    <div class="juz-tabs">
-      <button class="tab-btn" id="tab-29" onclick="switchJuz(29)">Juz 29</button>
-      <button class="tab-btn active" id="tab-30" onclick="switchJuz(30)">Juz 30</button>
-    </div>
-
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Bytt lys/mørk modus">🌙</button>
   </header>
 
   <div class="layout">
     <aside>
-      <div class="sidebar-label" id="sidebar-label">Juz 30 — Suraher</div>
+      <div class="sidebar-label" id="sidebar-label">Juz 29 &amp; 30 — Suraher</div>
       <div id="surah-list"></div>
     </aside>
 
@@ -490,12 +459,11 @@
 
   <script>
     const state = {
-      juz: 30,
       surahNum: null,
       ayahNum: null,
       looping: false,
       playingBasmala: false,
-      cache: {}        // { juzNum: { surahNum: { number, name, englishName, ... ayahs: [] } } }
+      allSurahs: {}    // { surahNum: { number, name, englishName, ..., ayahs: [] } }
     };
 
     const player = document.getElementById('player');
@@ -522,25 +490,23 @@
     }
 
     // ── API ──────────────────────────────────────────────
-    async function loadJuz(juzNum) {
-      if (state.cache[juzNum]) {
-        renderSidebar(juzNum);
-        return;
-      }
-
+    async function loadAll() {
       document.getElementById('surah-list').innerHTML = `
         <div class="status-msg">
           <div class="spinner"></div>
-          Laster Juz ${juzNum}…
+          Laster Juz 29 &amp; 30…
         </div>`;
 
       try {
-        const res = await fetch(`https://api.alquran.cloud/v1/juz/${juzNum}/quran-uthmani`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
+        const [r29, r30] = await Promise.all([
+          fetch('https://api.alquran.cloud/v1/juz/29/quran-uthmani'),
+          fetch('https://api.alquran.cloud/v1/juz/30/quran-uthmani')
+        ]);
+        if (!r29.ok || !r30.ok) throw new Error('HTTP error');
+        const [j29, j30] = await Promise.all([r29.json(), r30.json()]);
 
         const map = {};
-        for (let ayah of json.data.ayahs) {
+        for (let ayah of [...j29.data.ayahs, ...j30.data.ayahs]) {
           const sn = ayah.surah.number;
           if (!map[sn]) {
             map[sn] = {
@@ -557,8 +523,8 @@
           map[sn].ayahs.push(ayah);
         }
 
-        state.cache[juzNum] = map;
-        renderSidebar(juzNum);
+        state.allSurahs = map;
+        renderSidebar();
       } catch {
         document.getElementById('surah-list').innerHTML =
           `<div class="status-msg">Kunne ikke laste data.<br>Sjekk internettforbindelsen og last siden på nytt.</div>`;
@@ -566,10 +532,8 @@
     }
 
     // ── Sidebar ──────────────────────────────────────────
-    function renderSidebar(juzNum) {
-      document.getElementById('sidebar-label').textContent = `Juz ${juzNum} — Suraher`;
-      const map = state.cache[juzNum];
-      const list = Object.values(map).sort((a, b) => a.number - b.number);
+    function renderSidebar() {
+      const list = Object.values(state.allSurahs).sort((a, b) => a.number - b.number);
 
       document.getElementById('surah-list').innerHTML = list.map(s => `
         <button class="surah-btn ${state.surahNum === s.number ? 'active' : ''}"
@@ -582,7 +546,7 @@
           </span>
         </button>`).join('');
 
-      if (!state.surahNum || !map[state.surahNum]) {
+      if (!state.surahNum || !state.allSurahs[state.surahNum]) {
         selectSurah(list[0].number);
       }
     }
@@ -598,7 +562,7 @@
     }
 
     function renderSurah(surahNum) {
-      const surah = state.cache[state.juz]?.[surahNum];
+      const surah = state.allSurahs[surahNum];
       if (!surah) return;
 
       const ayahsHtml = surah.ayahs.map(a => `
@@ -645,7 +609,7 @@
       }
 
       // Update player footer
-      const surah = state.cache[state.juz]?.[surahNum];
+      const surah = state.allSurahs[surahNum];
       if (surah) {
         document.getElementById('p-track').textContent = surah.name;
         document.getElementById('p-meta').textContent = `${surah.englishName} — Ayat ${ayahNum}`;
@@ -678,7 +642,7 @@
       document.querySelectorAll('.ayah-item').forEach(el => el.classList.remove('active'));
       player.src = 'https://everyayah.com/data/Husary_64kbps/001001.mp3';
       player.play().catch(() => {});
-      const surah = state.cache[state.juz]?.[surahNum];
+      const surah = state.allSurahs[surahNum];
       if (surah) {
         document.getElementById('p-track').textContent = surah.name;
         document.getElementById('p-meta').textContent =
@@ -698,25 +662,6 @@
       document.querySelectorAll('.ayah-item').forEach(el => el.classList.remove('active'));
       const btnLoop = document.getElementById('btn-loop');
       if (btnLoop) { btnLoop.classList.remove('loop-on'); btnLoop.textContent = '↺ Loop'; }
-    }
-
-    // ── Juz switch ───────────────────────────────────────
-    function switchJuz(juzNum) {
-      if (state.juz === juzNum) return;
-      stopPlayback();
-      state.juz = juzNum;
-      state.surahNum = null;
-
-      document.getElementById('tab-29').classList.toggle('active', juzNum === 29);
-      document.getElementById('tab-30').classList.toggle('active', juzNum === 30);
-
-      document.getElementById('main').innerHTML = `
-        <div class="welcome">
-          <span class="welcome-ar">بِسْمِ ٱللَّهِ</span>
-          <p>Laster Juz ${juzNum}…</p>
-        </div>`;
-
-      loadJuz(juzNum);
     }
 
     // ── Theme ────────────────────────────────────────────
@@ -741,7 +686,7 @@
         playAyah(state.surahNum, state.ayahNum);
         return;
       }
-      const surah = state.cache[state.juz]?.[state.surahNum];
+      const surah = state.allSurahs[state.surahNum];
       if (surah) {
         const idx = surah.ayahs.findIndex(a => a.numberInSurah === state.ayahNum);
         if (idx !== -1 && idx + 1 < surah.ayahs.length) {
@@ -749,7 +694,7 @@
           state.ayahNum = next;
           playAyah(state.surahNum, next);
         } else {
-          const surahNums = Object.keys(state.cache[state.juz])
+          const surahNums = Object.keys(state.allSurahs)
             .map(Number).sort((a, b) => a - b);
           const si = surahNums.indexOf(state.surahNum);
           if (si !== -1 && si + 1 < surahNums.length) {
@@ -769,7 +714,7 @@
     });
 
     // ── Init ─────────────────────────────────────────────
-    loadJuz(30);
+    loadAll();
   </script>
 </body>
 </html>
