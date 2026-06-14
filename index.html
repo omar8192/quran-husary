@@ -62,14 +62,18 @@
       background: var(--bg);
       color: var(--text);
       height: 100vh;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      overscroll-behavior: none;
       transition: background 0.25s, color 0.25s;
     }
 
     /* ─── Header ─────────────────────────────────────── */
     header {
+      position: sticky;
+      top: 0;
       background: var(--header-bg);
       color: var(--header-text);
       display: flex;
@@ -569,7 +573,7 @@
       document.getElementById('surah-list').innerHTML = list.map(s => `
         <button class="surah-btn ${state.surahNum === s.number ? 'active' : ''}"
                 data-surah="${s.number}"
-                onclick="selectSurah(${s.number})">
+                onclick="selectSurah(${s.number}, true)">
           <span class="s-badge">${s.number}</span>
           <span class="s-names">
             <span class="s-ar">${s.name}</span>
@@ -583,12 +587,13 @@
     }
 
     // ── Surah ────────────────────────────────────────────
-    function selectSurah(surahNum) {
+    function selectSurah(surahNum, autoplay = false) {
       state.surahNum = surahNum;
       document.querySelectorAll('.surah-btn').forEach(btn => {
         btn.classList.toggle('active', parseInt(btn.dataset.surah) === surahNum);
       });
       renderSurah(surahNum);
+      if (autoplay) startSurah(surahNum);
     }
 
     function renderSurah(surahNum) {
@@ -633,7 +638,9 @@
       const el = document.getElementById(`ayah-${ayahNum}`);
       if (el) {
         el.classList.add('active');
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const mainEl = document.getElementById('main');
+        const offset = el.offsetTop - mainEl.clientHeight / 2 + el.clientHeight / 2;
+        mainEl.scrollTo({ top: offset, behavior: 'smooth' });
       }
 
       // Update player footer
